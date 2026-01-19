@@ -18,6 +18,8 @@ import {
   getCollectionContent,
 } from "./content.controller.js";
 import validateObjectId from "../../middlewares/validateObjectId.js";
+import validateOwnership from "../../middlewares/ownership.middleware.js";
+import Content from "../../models/content.model.js";
 
 const router = express.Router();
 
@@ -29,12 +31,13 @@ router.get("/", list);
 router.get("/search", search);
 router.get("/:id", getOne);
 // router.put("/:id", validate(updateContentSchema), update);
-router.delete("/:id", remove);
+router.delete("/:id", validateOwnership(Content, "id"), remove);
 
 // ✅ UPDATE CONTENT
 router.put(
   "/:id",
   validateObjectId("id"),
+  validateOwnership(Content, "id"),
   validate(updateContentSchema),
   update,
 );
@@ -43,6 +46,7 @@ router.put(
 router.put(
   "/:contentId/collections/:collectionId",
   validateObjectId("contentId"),
+  validateOwnership(Content, "id"),
   validateObjectId("collectionId"),
   addToCollection,
 );

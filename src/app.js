@@ -7,6 +7,7 @@ import authRoutes from "./modules/auth/auth.routes.js";
 import errorHandler from "./middlewares/error.middleware.js";
 import contentRoutes from "./modules/content/content.routes.js";
 import collectionRoutes from "./modules/collection/collection.routes.js";
+import embeddingRoutes from "./modules/ai/embedding.routes.js";
 
 import { swaggerUI, swaggerSpec } from "./docs/swagger.js";
 
@@ -25,6 +26,7 @@ app.use("/api/docs", swaggerUI.serve, swaggerUI.setup(swaggerSpec));
 app.use("/auth", authRoutes);
 app.use("/content", contentRoutes);
 app.use("/collections", collectionRoutes);
+app.use("/ai", embeddingRoutes);
 
 // Error handler last
 app.use(errorHandler);
