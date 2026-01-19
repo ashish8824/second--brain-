@@ -1,5 +1,11 @@
 import swaggerJSDoc from "swagger-jsdoc";
 import swaggerUI from "swagger-ui-express";
+import path from "path";
+import { fileURLToPath } from "url";
+
+// Get __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const options = {
   definition: {
@@ -89,15 +95,23 @@ const options = {
       },
     ],
   },
+  // ✅ Corrected paths based on your folder structure
+  // swagger.js is in src/docs/, so we go up one level to src, then into modules
   apis: [
-    "./modules/auth/*.swagger.js",
-    "./modules/content/*.swagger.js",
-    "./modules/collection/*.swagger.js",
-    "./modules/ai/*.swagger.js",
-    "./modules/auth/auth.routes.js",
+    path.join(__dirname, "../modules/auth/auth.swagger.js"),
+    path.join(__dirname, "../modules/auth/auth.routes.js"),
+    path.join(__dirname, "../modules/content/content.swagger.js"),
+    path.join(__dirname, "../modules/content/content.routes.js"),
+    path.join(__dirname, "../modules/collection/collection.swagger.js"),
+    path.join(__dirname, "../modules/collection/collection.routes.js"),
+    path.join(__dirname, "../modules/ai/embedding.swagger.js"),
+    path.join(__dirname, "../modules/ai/embedding.routes.js"),
   ],
 };
 
 const swaggerSpec = swaggerJSDoc(options);
+
+// ✅ Debug: Log loaded paths (remove after confirming it works)
+console.log("📚 Swagger loaded paths:", Object.keys(swaggerSpec.paths || {}));
 
 export { swaggerUI, swaggerSpec };
