@@ -19,16 +19,87 @@ app.use(express.json());
 // Passport
 app.use(passport.initialize());
 
-// Swagger
-app.use("/api/docs", swaggerUI.serve, swaggerUI.setup(swaggerSpec));
+// ✅ ROOT ROUTE - Welcome message
+app.get("/", (req, res) => {
+  res.json({
+    message: "🚀 Second Brain API is running!",
+    status: "healthy",
+    version: "1.0.0",
+    documentation: "/api/docs",
+    endpoints: {
+      auth: {
+        register: "POST /auth/register",
+        login: "POST /auth/login",
+        googleAuth: "GET /auth/google",
+        me: "GET /auth/me (Protected)",
+        forgotPassword: "POST /auth/forgot-password",
+        resetPassword: "POST /auth/reset-password/:token",
+      },
+      content: "/content/*",
+      collections: "/collections/*",
+      ai: "/ai/*",
+    },
+    swagger: {
+      ui: "/api/docs",
+      json: "/api/docs.json",
+    },
+  });
+});
 
-// Routes
+// ✅ HEALTH CHECK ROUTE
+app.get("/health", (req, res) => {
+  res.json({
+    status: "OK",
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || "development",
+  });
+});
+
+// Swagger Documentation
+app.use(
+  "/api/docs",
+  swaggerUI.serve,
+  swaggerUI.setup(swaggerSpec, {
+    customCss: ".swagger-ui .topbar { display: none }",
+    customSiteTitle: "Second Brain API Documentation",
+    customfavIcon: "/favicon.ico",
+    swaggerOptions: {
+      persistAuthorization: true,
+      displayRequestDuration: true,
+    },
+  }),
+);
+
+// ✅ SWAGGER JSON ENDPOINT
+app.get("/api/docs.json", (req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  res.send(swaggerSpec);
+});
+
+// API Routes
 app.use("/auth", authRoutes);
 app.use("/content", contentRoutes);
 app.use("/collections", collectionRoutes);
 app.use("/ai", embeddingRoutes);
 
-// Error handler last
+// ✅ 404 HANDLER - Must be before error handler
+app.use((req, res, next) => {
+  res.status(404).json({
+    success: false,
+    message: "Route not found",
+    path: req.originalUrl,
+    availableEndpoints: {
+      documentation: "/api/docs",
+      auth: "/auth/*",
+      content: "/content/*",
+      collections: "/collections/*",
+      ai: "/ai/*",
+    },
+  });
+});
+
+// Error handler (must be last)
 app.use(errorHandler);
 
 export default app;
