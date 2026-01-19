@@ -31,13 +31,12 @@ router.get("/", list);
 router.get("/search", search);
 router.get("/:id", getOne);
 // router.put("/:id", validate(updateContentSchema), update);
-router.delete("/:id", validateOwnership(Content, "id"), remove);
+router.delete("/:id", remove);
 
 // ✅ UPDATE CONTENT
 router.put(
   "/:id",
   validateObjectId("id"),
-  validateOwnership(Content, "id"),
   validate(updateContentSchema),
   update,
 );
@@ -46,7 +45,6 @@ router.put(
 router.put(
   "/:contentId/collections/:collectionId",
   validateObjectId("contentId"),
-  validateOwnership(Content, "id"),
   validateObjectId("collectionId"),
   addToCollection,
 );
