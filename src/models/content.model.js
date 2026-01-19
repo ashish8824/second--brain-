@@ -49,6 +49,14 @@ const contentSchema = new mongoose.Schema(
       type: String,
       index: true, // Index for faster duplicate checks
     },
+
+    collections: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Collection",
+      },
+    ],
+
     isDeleted: {
       type: Boolean,
       default: false,
@@ -62,6 +70,23 @@ const contentSchema = new mongoose.Schema(
 
 // ✅ Add compound index for efficient duplicate detection
 contentSchema.index({ userId: 1, contentHash: 1, isDeleted: 1 });
+
+// 🔍 Full-text search index
+contentSchema.index(
+  {
+    title: "text",
+    body: "text",
+    tags: "text",
+  },
+  {
+    name: "ContentTextIndex",
+    weights: {
+      title: 5, // title more important
+      body: 3,
+      tags: 2,
+    },
+  },
+);
 
 const Content = mongoose.model("Content", contentSchema);
 

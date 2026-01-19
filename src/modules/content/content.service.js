@@ -175,3 +175,93 @@ export const deleteContent = async (contentId, userId) => {
     throw new ApiError(404, "Content not found");
   }
 };
+
+/**
+ * Full-text search content for a user
+ */
+export const searchUserContent = async (userId, options) => {
+  const { q, page = 1, limit = 20 } = options;
+
+  if (!q || q.trim().length === 0) {
+    return {
+      data: [],
+      pagination: {
+        totalItems: 0,
+        totalPages: 0,
+        currentPage: page,
+        limit,
+      },
+    };
+  }
+
+  const pageNumber = Math.max(Number(page), 1);
+  const pageLimit = Math.min(Number(limit), 100);
+  const skip = (pageNumber - 1) * pageLimit;
+
+  const filter = {
+    userId,
+    isDeleted: false,
+    $text: { $search: q },
+  };
+
+  const projection = {
+    score: { $meta: "textScore" },
+  };
+
+  const [data, totalItems] = await Promise.all([
+    Content.find(filter, projection)
+      .sort({ score: { $meta: "textScore" } })
+      .skip(skip)
+      .limit(pageLimit),
+
+    Content.countDocuments(filter),
+  ]);
+
+  return {
+    data,
+    pagination: {
+      totalItems,
+      totalPages: Math.ceil(totalItems / pageLimit),
+      currentPage: pageNumber,
+      limit: pageLimit,
+    },
+  };
+};
+
+/**
+ * Add content to a collection
+ */
+export const addContentToCollection = async (
+  contentId,
+  collectionId,
+  userId,
+) => {
+  const updated = await Content.findOneAndUpdate(
+    {
+      _id: contentId,
+      userId,
+      isDeleted: false,
+    },
+    {
+      $addToSet: { collections: collectionId }, // prevents duplicates
+    },
+    { new: true },
+  );
+
+  if (!updated) {
+    throw new ApiError(404, "Content not found");
+  }
+
+  return updated;
+};
+
+/**
+ * Get all content inside a collection
+ */
+export const getContentByCollection = async (collectionId, userId) => {
+  return Content.find({
+    userId,
+    isDeleted: false,
+    collections: collectionId,
+  }).sort({ createdAt: -1 });
+};

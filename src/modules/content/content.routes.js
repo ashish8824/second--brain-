@@ -7,7 +7,16 @@ import {
   updateContentSchema,
 } from "./content.validation.js";
 
-import { create, list, getOne, update, remove } from "./content.controller.js";
+import {
+  create,
+  list,
+  getOne,
+  update,
+  remove,
+  search,
+  addToCollection,
+  getCollectionContent,
+} from "./content.controller.js";
 import validateObjectId from "../../middlewares/validateObjectId.js";
 
 const router = express.Router();
@@ -17,6 +26,7 @@ router.use(authMiddleware);
 
 router.post("/", validate(createContentSchema), create);
 router.get("/", list);
+router.get("/search", search);
 router.get("/:id", getOne);
 // router.put("/:id", validate(updateContentSchema), update);
 router.delete("/:id", remove);
@@ -28,5 +38,16 @@ router.put(
   validate(updateContentSchema),
   update,
 );
+
+// ✅ COLLECTION ASSIGNMENT (must be before :id)
+router.put(
+  "/:contentId/collections/:collectionId",
+  validateObjectId("contentId"),
+  validateObjectId("collectionId"),
+  addToCollection,
+);
+
+// ✅ GET CONTENT INSIDE A COLLECTION
+router.get("/:id/content", validateObjectId("id"), getCollectionContent);
 
 export default router;

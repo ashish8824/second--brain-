@@ -6,6 +6,7 @@ import "./config/passport.js";
 import authRoutes from "./modules/auth/auth.routes.js";
 import errorHandler from "./middlewares/error.middleware.js";
 import contentRoutes from "./modules/content/content.routes.js";
+import collectionRoutes from "./modules/collection/collection.routes.js";
 
 import { swaggerUI, swaggerSpec } from "./docs/swagger.js";
 
@@ -22,8 +23,8 @@ app.use("/api/docs", swaggerUI.serve, swaggerUI.setup(swaggerSpec));
 
 // Routes
 app.use("/auth", authRoutes);
-
 app.use("/content", contentRoutes);
+app.use("/collections", collectionRoutes);
 
 // Error handler last
 app.use(errorHandler);

@@ -231,3 +231,39 @@
  *       401:
  *         description: Unauthorized
  */
+
+/**
+ * @swagger
+ * /content/search:
+ *   get:
+ *     summary: Full-text search user content
+ *     tags: [Content]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: q
+ *         required: true
+ *         schema:
+ *           type: string
+ *           example: h1b visa
+ *         description: Search query
+ *
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           example: 20
+ *
+ *     responses:
+ *       200:
+ *         description: Search results
+ *       401:
+ *         description: Unauthorized
+ */

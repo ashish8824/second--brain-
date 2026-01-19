@@ -4,6 +4,9 @@ import {
   getContentById,
   updateContent,
   deleteContent,
+  searchUserContent,
+  addContentToCollection,
+  getContentByCollection,
 } from "./content.service.js";
 
 /**
@@ -92,6 +95,68 @@ export const remove = async (req, res, next) => {
     res.status(200).json({
       success: true,
       message: "Content deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Search content (full-text)
+ */
+export const search = async (req, res, next) => {
+  try {
+    const { q, page, limit } = req.query;
+
+    const result = await searchUserContent(req.user.userId, {
+      q,
+      page,
+      limit,
+    });
+
+    res.status(200).json({
+      success: true,
+      ...result,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Add content to a collection
+ */
+export const addToCollection = async (req, res, next) => {
+  try {
+    const { contentId, collectionId } = req.params;
+
+    const updated = await addContentToCollection(
+      contentId,
+      collectionId,
+      req.user.userId,
+    );
+
+    res.status(200).json({
+      success: true,
+      data: updated,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get content inside a collection
+ */
+export const getCollectionContent = async (req, res, next) => {
+  try {
+    const { id: collectionId } = req.params;
+
+    const content = await getContentByCollection(collectionId, req.user.userId);
+
+    res.status(200).json({
+      success: true,
+      data: content,
     });
   } catch (error) {
     next(error);
