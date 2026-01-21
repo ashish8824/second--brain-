@@ -1,7 +1,12 @@
+// src/modules/auth/auth.service.js
 import bcrypt from "bcryptjs";
 import User from "../../models/user.model.js";
 import ApiError from "../../utils/apiError.js";
 import crypto from "crypto";
+import {
+  sendPasswordResetEmail,
+  sendWelcomeEmail,
+} from "../../services/emailService.js";
 
 /**
  * Register a new user
@@ -9,9 +14,8 @@ import crypto from "crypto";
 export const registerUser = async ({ name, email, password }) => {
   const existingUser = await User.findOne({ email });
 
-  // ❌ Instead of throw new Error()
   if (existingUser) {
-    throw new ApiError(409, "Email already registered"); // 409 Conflict
+    throw new ApiError(409, "Email already registered");
   }
 
   const salt = await bcrypt.genSalt(10);
@@ -23,6 +27,11 @@ export const registerUser = async ({ name, email, password }) => {
     password: hashedPassword,
   });
 
+  // Send welcome email (non-blocking - don't wait for it)
+  sendWelcomeEmail(email, name).catch((err) =>
+    console.error("Welcome email failed:", err),
+  );
+
   return user;
 };
 
@@ -30,7 +39,6 @@ export const registerUser = async ({ name, email, password }) => {
  * Login user
  */
 export const loginUser = async ({ email, password }) => {
-  // IMPORTANT: password is select:false in schema
   const user = await User.findOne({ email }).select("+password");
 
   if (!user) {
@@ -54,7 +62,8 @@ export const forgotPassword = async (email) => {
 
   // SECURITY: Do NOT reveal if user exists
   if (!user) {
-    return;
+    console.log("⚠️ Password reset requested for non-existent email:", email);
+    return; // Still return success to user for security
   }
 
   // 1. Generate random token
@@ -72,10 +81,22 @@ export const forgotPassword = async (email) => {
 
   await user.save();
 
-  // 4. Reset link (normally emailed)
-  const resetLink = `http://localhost:3000/reset-password/${resetToken}`;
+  // 4. Send email with reset link
+  try {
+    await sendPasswordResetEmail(email, resetToken);
+    console.log("✅ Password reset email sent to:", email);
+  } catch (error) {
+    // Rollback - remove token if email fails
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpiry = undefined;
+    await user.save();
 
-  console.log("🔗 PASSWORD RESET LINK:", resetLink);
+    console.error("❌ Failed to send password reset email:", error);
+    throw new ApiError(
+      500,
+      "Failed to send password reset email. Please try again.",
+    );
+  }
 };
 
 /**
@@ -104,4 +125,6 @@ export const resetPassword = async (token, newPassword) => {
   user.resetPasswordExpiry = undefined;
 
   await user.save();
+
+  console.log("✅ Password reset successful for user:", user.email);
 };
