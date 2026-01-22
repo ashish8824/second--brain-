@@ -1,14 +1,12 @@
 // src/services/emailService.js
 import sgMail from "@sendgrid/mail";
-import dotenv from "dotenv";
-
-dotenv.config(); // ✅ LOAD ENV FIRST
-
-if (!process.env.SENDGRID_API_KEY) {
-  throw new Error("SENDGRID_API_KEY is missing");
-}
 
 // Initialize SendGrid with API key
+if (!process.env.SENDGRID_API_KEY) {
+  console.error("❌ SENDGRID_API_KEY is not set in environment variables");
+  throw new Error("SENDGRID_API_KEY is required");
+}
+
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 /**
@@ -49,7 +47,7 @@ export const sendPasswordResetEmail = async (email, resetToken) => {
               padding: 20px;
             }
             .header {
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              background: #667eea;
               color: white;
               padding: 30px;
               text-align: center;
@@ -63,16 +61,6 @@ export const sendPasswordResetEmail = async (email, resetToken) => {
               background: #f9f9f9;
               padding: 30px;
               border-radius: 0 0 10px 10px;
-            }
-            .button {
-              display: inline-block;
-              padding: 15px 30px;
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              color: white !important;
-              text-decoration: none;
-              border-radius: 5px;
-              margin: 20px 0;
-              font-weight: bold;
             }
             .warning {
               background: #fff3cd;
@@ -101,13 +89,20 @@ export const sendPasswordResetEmail = async (email, resetToken) => {
               <p>Hello,</p>
               <p>We received a request to reset your password. Click the button below:</p>
               
-              <div style="text-align: center;">
-                <a href="${resetLink}" class="button">Reset Password</a>
+              <!-- Email-safe button using table -->
+              <div style="text-align: center; margin: 30px 0;">
+                <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin: 0 auto;">
+                  <tr>
+                    <td style="border-radius: 5px; background: #667eea;">
+                      <a href="${resetLink}" target="_blank" style="display: inline-block; padding: 15px 30px; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold; font-family: Arial, sans-serif;">Reset Password</a>
+                    </td>
+                  </tr>
+                </table>
               </div>
               
               <p>Or copy this link:</p>
               <div class="link-box">
-                <a href="${resetLink}" style="color: #667eea;">${resetLink}</a>
+                <a href="${resetLink}" style="color: #667eea; word-break: break-all;">${resetLink}</a>
               </div>
               
               <div class="warning">
@@ -129,9 +124,10 @@ export const sendPasswordResetEmail = async (email, resetToken) => {
 
   try {
     console.log("   Sending via SendGrid...");
-    await sgMail.send(msg);
+    const response = await sgMail.send(msg);
     console.log("✅ Email sent successfully via SendGrid!");
     console.log("   Sent to:", email);
+    console.log("   Message ID:", response[0].headers["x-message-id"]);
     return { success: true };
   } catch (error) {
     console.error("❌ SendGrid error!");
@@ -161,17 +157,23 @@ export const sendWelcomeEmail = async (email, name) => {
     html: `
       <!DOCTYPE html>
       <html>
-        <body style="font-family: Arial, sans-serif;">
+        <body style="font-family: Arial, sans-serif; margin: 0; padding: 0;">
           <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px;">
-              <h1>🧠 Welcome to Second Brain!</h1>
+            <div style="background: #667eea; color: white; padding: 30px; text-align: center; border-radius: 10px;">
+              <h1 style="margin: 0;">🧠 Welcome to Second Brain!</h1>
             </div>
             <div style="background: #f9f9f9; padding: 30px; margin-top: 20px; border-radius: 10px;">
               <p>Hi <strong>${name}</strong>,</p>
               <p>Thank you for joining Second Brain!</p>
               <p>Get started organizing your knowledge today.</p>
               <div style="text-align: center; margin: 30px 0;">
-                <a href="${frontendUrl}/dashboard" style="display: inline-block; padding: 15px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">Get Started</a>
+                <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin: 0 auto;">
+                  <tr>
+                    <td style="border-radius: 5px; background: #667eea;">
+                      <a href="${frontendUrl}/dashboard" target="_blank" style="display: inline-block; padding: 15px 30px; color: #ffffff; text-decoration: none; border-radius: 5px; font-weight: bold; font-family: Arial, sans-serif;">Get Started</a>
+                    </td>
+                  </tr>
+                </table>
               </div>
               <p>Best regards,<br><strong>The Second Brain Team</strong></p>
             </div>
@@ -186,6 +188,7 @@ export const sendWelcomeEmail = async (email, name) => {
     console.log("✅ Welcome email sent to:", email);
   } catch (error) {
     console.error("❌ Welcome email failed:", error.message);
+    // Don't throw error for welcome email - it's not critical
   }
 };
 
@@ -205,6 +208,11 @@ export const testEmailConnection = async () => {
       return false;
     }
     console.log("✅ SendGrid configuration looks good");
+    console.log(
+      "   API Key:",
+      process.env.SENDGRID_API_KEY ? "SET ✓" : "NOT SET",
+    );
+    console.log("   Sender:", process.env.SENDGRID_VERIFIED_SENDER);
     return true;
   } catch (error) {
     console.error("❌ SendGrid config error:", error);

@@ -8,6 +8,7 @@ import errorHandler from "./middlewares/error.middleware.js";
 import contentRoutes from "./modules/content/content.routes.js";
 import collectionRoutes from "./modules/collection/collection.routes.js";
 import embeddingRoutes from "./modules/ai/embedding.routes.js";
+import aiQARoutes from "./modules/ai/aiQA.routes.js"; // ✅ NEW
 
 import { swaggerUI, swaggerSpec } from "./docs/swagger.js";
 
@@ -15,11 +16,9 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
-
-// Passport
 app.use(passport.initialize());
 
-// ✅ ROOT ROUTE - Welcome message
+// Root route
 app.get("/", (req, res) => {
   res.json({
     message: "🚀 Second Brain API is running!",
@@ -37,7 +36,10 @@ app.get("/", (req, res) => {
       },
       content: "/content/*",
       collections: "/collections/*",
-      ai: "/ai/*",
+      ai: {
+        embeddings: "/ai/*",
+        qa: "POST /ai/ask (NEW!)", // ✅ NEW
+      },
     },
     swagger: {
       ui: "/api/docs",
@@ -46,7 +48,7 @@ app.get("/", (req, res) => {
   });
 });
 
-// ✅ HEALTH CHECK ROUTE
+// Health check
 app.get("/health", (req, res) => {
   res.json({
     status: "OK",
@@ -71,7 +73,6 @@ app.use(
   }),
 );
 
-// ✅ SWAGGER JSON ENDPOINT
 app.get("/api/docs.json", (req, res) => {
   res.setHeader("Content-Type", "application/json");
   res.send(swaggerSpec);
@@ -82,8 +83,9 @@ app.use("/auth", authRoutes);
 app.use("/content", contentRoutes);
 app.use("/collections", collectionRoutes);
 app.use("/ai", embeddingRoutes);
+app.use("/ai", aiQARoutes); // ✅ NEW - AI Q&A routes
 
-// ✅ 404 HANDLER - Must be before error handler
+// 404 Handler
 app.use((req, res, next) => {
   res.status(404).json({
     success: false,
@@ -95,11 +97,12 @@ app.use((req, res, next) => {
       content: "/content/*",
       collections: "/collections/*",
       ai: "/ai/*",
+      aiQA: "POST /ai/ask", // ✅ NEW
     },
   });
 });
 
-// Error handler (must be last)
+// Error handler
 app.use(errorHandler);
 
 export default app;
