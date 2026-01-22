@@ -14,7 +14,21 @@ import { swaggerUI, swaggerSpec } from "./docs/swagger.js";
 
 const app = express();
 
-app.use(cors());
+const allowedOrigins = process.env.FRONTEND_URL.split(",");
+
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("CORS not allowed"));
+      }
+    },
+    credentials: true,
+  }),
+);
+
 app.use(express.json());
 app.use(passport.initialize());
 
