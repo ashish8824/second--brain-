@@ -1,39 +1,35 @@
 // src/services/emailService.js
-import nodemailer from "nodemailer";
+import sgMail from "@sendgrid/mail";
+import dotenv from "dotenv";
 
-/**
- * Create email transporter
- */
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false, // use TLS
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_APP_PASSWORD,
-    },
-    tls: {
-      rejectUnauthorized: false, // 👈 THIS FIXES THE ERROR
-    },
-  });
-};
+dotenv.config(); // ✅ LOAD ENV FIRST
+
+if (!process.env.SENDGRID_API_KEY) {
+  throw new Error("SENDGRID_API_KEY is missing");
+}
+
+// Initialize SendGrid with API key
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 /**
  * Send password reset email
  */
 export const sendPasswordResetEmail = async (email, resetToken) => {
-  const transporter = createTransporter();
+  console.log("📧 Attempting to send email via SendGrid...");
+  console.log("   To:", email);
+  console.log("   From:", process.env.SENDGRID_VERIFIED_SENDER);
 
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
   const resetLink = `${frontendUrl}/reset-password/${resetToken}`;
 
-  const mailOptions = {
-    from: {
-      name: "Second Brain",
-      address: process.env.EMAIL_USER,
-    },
+  console.log("   Reset link:", resetLink);
+
+  const msg = {
     to: email,
+    from: {
+      email: process.env.SENDGRID_VERIFIED_SENDER,
+      name: "Second Brain",
+    },
     subject: "Password Reset Request - Second Brain",
     html: `
       <!DOCTYPE html>
@@ -132,11 +128,17 @@ export const sendPasswordResetEmail = async (email, resetToken) => {
   };
 
   try {
-    const info = await transporter.sendMail(mailOptions);
-    console.log("✅ Email sent:", info.messageId);
-    return info;
+    console.log("   Sending via SendGrid...");
+    await sgMail.send(msg);
+    console.log("✅ Email sent successfully via SendGrid!");
+    console.log("   Sent to:", email);
+    return { success: true };
   } catch (error) {
-    console.error("❌ Email failed:", error);
+    console.error("❌ SendGrid error!");
+    console.error("   Error:", error.message);
+    if (error.response) {
+      console.error("   Response:", error.response.body);
+    }
     throw new Error("Failed to send email");
   }
 };
@@ -145,14 +147,16 @@ export const sendPasswordResetEmail = async (email, resetToken) => {
  * Send welcome email
  */
 export const sendWelcomeEmail = async (email, name) => {
-  const transporter = createTransporter();
+  console.log("📧 Sending welcome email via SendGrid to:", email);
 
-  const mailOptions = {
-    from: {
-      name: "Second Brain",
-      address: process.env.EMAIL_USER,
-    },
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
+
+  const msg = {
     to: email,
+    from: {
+      email: process.env.SENDGRID_VERIFIED_SENDER,
+      name: "Second Brain",
+    },
     subject: "Welcome to Second Brain! 🎉",
     html: `
       <!DOCTYPE html>
@@ -166,6 +170,9 @@ export const sendWelcomeEmail = async (email, name) => {
               <p>Hi <strong>${name}</strong>,</p>
               <p>Thank you for joining Second Brain!</p>
               <p>Get started organizing your knowledge today.</p>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${frontendUrl}/dashboard" style="display: inline-block; padding: 15px 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">Get Started</a>
+              </div>
               <p>Best regards,<br><strong>The Second Brain Team</strong></p>
             </div>
           </div>
@@ -175,10 +182,10 @@ export const sendWelcomeEmail = async (email, name) => {
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    await sgMail.send(msg);
     console.log("✅ Welcome email sent to:", email);
   } catch (error) {
-    console.error("❌ Welcome email failed:", error);
+    console.error("❌ Welcome email failed:", error.message);
   }
 };
 
@@ -187,12 +194,20 @@ export const sendWelcomeEmail = async (email, name) => {
  */
 export const testEmailConnection = async () => {
   try {
-    const transporter = createTransporter();
-    await transporter.verify();
-    console.log("✅ Email service ready");
+    if (!process.env.SENDGRID_API_KEY) {
+      console.error("❌ SENDGRID_API_KEY not set in environment variables");
+      return false;
+    }
+    if (!process.env.SENDGRID_VERIFIED_SENDER) {
+      console.error(
+        "❌ SENDGRID_VERIFIED_SENDER not set in environment variables",
+      );
+      return false;
+    }
+    console.log("✅ SendGrid configuration looks good");
     return true;
   } catch (error) {
-    console.error("❌ Email config error:", error);
+    console.error("❌ SendGrid config error:", error);
     return false;
   }
 };

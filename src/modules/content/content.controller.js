@@ -7,6 +7,7 @@ import {
   searchUserContent,
   addContentToCollection,
   getContentByCollection,
+  createContentFromURL,
 } from "./content.service.js";
 
 /**
@@ -157,6 +158,39 @@ export const getCollectionContent = async (req, res, next) => {
     res.status(200).json({
       success: true,
       data: content,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * ✅ NEW: Create content from URL with AI summary
+ */
+export const createFromURL = async (req, res, next) => {
+  try {
+    const { url, tags } = req.body;
+
+    const content = await createContentFromURL(req.user.userId, {
+      url,
+      tags,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Content added successfully with AI summary",
+      data: {
+        id: content._id,
+        title: content.title,
+        summary: content.summary,
+        keyPoints: content.keyPoints,
+        tags: content.tags,
+        url: content.sourceUrl,
+        wordCount: content.metadata?.wordCount,
+        readingTime: content.metadata?.readingTime,
+        createdAt: content.createdAt,
+        aiGenerated: !content.metadata?.isFallbackSummary,
+      },
     });
   } catch (error) {
     next(error);

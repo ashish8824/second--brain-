@@ -267,3 +267,84 @@
  *       401:
  *         description: Unauthorized
  */
+
+/**
+ * @swagger
+ * /content/from-url:
+ *   post:
+ *     summary: 🤖 Create content from URL with AI-powered summary
+ *     description: |
+ *       Automatically scrape any URL, extract content, and generate:
+ *       - AI-powered summary (2-3 sentences)
+ *       - 5 key takeaways from the article
+ *       - Relevant tags for organization
+ *       - Reading time estimate
+ *
+ *       The system intelligently extracts meaningful content and filters out
+ *       navigation, ads, and metadata.
+ *     tags: [Content]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - url
+ *             properties:
+ *               url:
+ *                 type: string
+ *                 format: uri
+ *                 example: https://nodejs.org/en/about
+ *                 description: The URL to scrape and summarize
+ *               tags:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["important", "read-later", "backend"]
+ *                 description: Optional custom tags to add (will be combined with AI-generated tags)
+ *     responses:
+ *       201:
+ *         description: Content created successfully with AI summary
+ *         content:
+ *           application/json:
+ *             example:
+ *               success: true
+ *               message: "Content added successfully with AI summary"
+ *               data:
+ *                 id: "65afc1b2c8a9f3b9a1234567"
+ *                 title: "About Node.js"
+ *                 summary: "Node.js is an open-source, cross-platform JavaScript runtime environment that executes JavaScript code outside a web browser. It enables developers to use JavaScript for server-side scripting and building scalable network applications."
+ *                 keyPoints:
+ *                   - "Node.js allows developers to use JavaScript for server-side programming"
+ *                   - "It runs on the V8 JavaScript engine developed by Google"
+ *                   - "Node.js uses an event-driven, non-blocking I/O model"
+ *                   - "It is designed for building scalable network applications"
+ *                   - "Node.js has a large ecosystem of open-source libraries via npm"
+ *                 tags: ["javascript", "web development", "backend", "important", "read-later"]
+ *                 url: "https://nodejs.org/en/about"
+ *                 wordCount: 1250
+ *                 readingTime: 7
+ *                 createdAt: "2026-01-22T10:30:00.000Z"
+ *                 aiGenerated: true
+ *       400:
+ *         description: Invalid URL format
+ *         content:
+ *           application/json:
+ *             example:
+ *               success: false
+ *               message: "Please provide a valid URL starting with http:// or https://"
+ *       409:
+ *         description: Duplicate content
+ *         content:
+ *           application/json:
+ *             example:
+ *               success: false
+ *               message: "Content from this URL already exists in your collection"
+ *       401:
+ *         description: Unauthorized - Missing or invalid token
+ *       500:
+ *         description: Server error (scraping or AI generation failed)
+ */

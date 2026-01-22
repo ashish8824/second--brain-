@@ -25,3 +25,11 @@ export const updateContentSchema = z
     metadata: z.record(z.string(), z.unknown()).optional(), // ✅ Fixed
   })
   .partial();
+
+// ✅ NEW: Validation for creating content from URL
+export const createFromURLSchema = z.object({
+  url: z.string().url({
+    message: "Please provide a valid URL starting with http:// or https://",
+  }),
+  tags: z.array(z.string()).optional(),
+});

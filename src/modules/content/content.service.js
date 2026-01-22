@@ -2,6 +2,9 @@ import Content from "../../models/content.model.js";
 import ApiError from "../../utils/apiError.js";
 
 import crypto from "crypto";
+import urlScraper from "../../utils/urlScraper.js";
+import aiSummaryService from "../../services/aiSummaryService.js";
+import groqSummaryService from "../../services/groqSummaryService.js";
 
 /**
  * Generate content hash
@@ -264,4 +267,96 @@ export const getContentByCollection = async (collectionId, userId) => {
     isDeleted: false,
     collections: collectionId,
   }).sort({ createdAt: -1 });
+};
+
+/**
+ * ✅ UPDATED: Create content from URL with AI summary
+ * Don't store full body content to save database space
+ */
+/**
+ * ✅ UPDATED: Create content from URL with Groq AI summary
+ */
+export const createContentFromURL = async (userId, data) => {
+  const { url, tags: userTags } = data;
+
+  console.log(`[Service] Processing URL for user ${userId}: ${url}`);
+
+  // Step 1: Scrape the URL
+  const scrapedData = await urlScraper.scrapeURL(url);
+
+  // Step 2: Check for duplicate
+  const existingContent = await Content.findOne({
+    userId,
+    sourceUrl: url,
+    isDeleted: false,
+  });
+
+  if (existingContent) {
+    throw new ApiError(
+      409,
+      "Content from this URL already exists in your collection",
+    );
+  }
+
+  // Step 3: Generate AI summary
+  let aiSummary;
+
+  try {
+    // Try Groq first (if API key is available)
+    if (process.env.GROQ_API_KEY) {
+      console.log("[Service] Using Groq for AI summary...");
+      aiSummary = await groqSummaryService.generateCompleteSummary(scrapedData);
+    } else {
+      console.log("[Service] Using Hugging Face for AI summary...");
+      aiSummary = await aiSummaryService.generateCompleteSummary(scrapedData);
+    }
+  } catch (error) {
+    console.error("[Service] Primary AI failed, trying fallback...");
+    aiSummary = await aiSummaryService.generateCompleteSummary(scrapedData);
+  }
+
+  // Step 4: Combine tags
+  const allTags = [
+    ...new Set([...(aiSummary.tags || []), ...(userTags || [])]),
+  ].slice(0, 10);
+
+  // Step 5: Generate content hash
+  const contentHash = crypto
+    .createHash("sha256")
+    .update(
+      JSON.stringify({
+        type: "link",
+        title: scrapedData.title,
+        url: scrapedData.url,
+      }),
+    )
+    .digest("hex");
+
+  // Step 6: Create content
+  const content = await Content.create({
+    userId,
+    type: "link",
+    title: scrapedData.title,
+    body: scrapedData.content.substring(0, 500).trim() + "...",
+    sourceUrl: scrapedData.url,
+    summary: aiSummary.summary,
+    keyPoints: aiSummary.keyPoints,
+    tags: allTags,
+    contentHash,
+    metadata: {
+      author: scrapedData.author,
+      publishDate: scrapedData.publishDate,
+      wordCount: scrapedData.wordCount,
+      readingTime: scrapedData.readingTime,
+      image: scrapedData.image,
+      scrapedAt: scrapedData.scrapedAt,
+      summarizedAt: aiSummary.generatedAt,
+      isFallbackSummary: aiSummary.isFallback || false,
+      aiModel: aiSummary.model,
+    },
+  });
+
+  console.log(`[Service] Content created successfully: ${content._id}`);
+
+  return content;
 };

@@ -4,6 +4,7 @@ import validate from "../../middlewares/validate.middleware.js";
 
 import {
   createContentSchema,
+  createFromURLSchema,
   updateContentSchema,
 } from "./content.validation.js";
 
@@ -16,6 +17,7 @@ import {
   search,
   addToCollection,
   getCollectionContent,
+  createFromURL,
 } from "./content.controller.js";
 import validateObjectId from "../../middlewares/validateObjectId.js";
 import validateOwnership from "../../middlewares/ownership.middleware.js";
@@ -51,5 +53,8 @@ router.put(
 
 // ✅ GET CONTENT INSIDE A COLLECTION
 router.get("/:id/content", validateObjectId("id"), getCollectionContent);
+
+// ✅ NEW ROUTE: Create from URL (must be before /:id routes)
+router.post("/from-url", validate(createFromURLSchema), createFromURL);
 
 export default router;

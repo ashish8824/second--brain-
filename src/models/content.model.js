@@ -1,9 +1,5 @@
 import mongoose from "mongoose";
 
-/**
- * Content Schema
- * Represents a saved knowledge item (Second Brain)
- */
 const contentSchema = new mongoose.Schema(
   {
     userId: {
@@ -26,12 +22,25 @@ const contentSchema = new mongoose.Schema(
     },
 
     body: {
-      type: String, // text / extracted text
+      type: String,
     },
 
     sourceUrl: {
-      type: String, // for links
+      type: String,
     },
+
+    // ✅ NEW FIELDS FOR AI SUMMARY
+    summary: {
+      type: String,
+      trim: true,
+    },
+
+    keyPoints: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
 
     tags: [
       {
@@ -42,12 +51,22 @@ const contentSchema = new mongoose.Schema(
     ],
 
     metadata: {
-      type: Object, // flexible (author, platform, etc.)
+      type: Object,
+      // Extended metadata
+      author: String,
+      publishDate: Date,
+      wordCount: Number,
+      readingTime: Number,
+      image: String,
+      scrapedAt: Date,
+      summarizedAt: Date,
+      isFallbackSummary: Boolean,
+      aiModel: String,
     },
+
     contentHash: {
-      // ✅ Add this field
       type: String,
-      index: true, // Index for faster duplicate checks
+      index: true,
     },
 
     collections: [
@@ -68,20 +87,20 @@ const contentSchema = new mongoose.Schema(
   },
 );
 
-// ✅ Add compound index for efficient duplicate detection
 contentSchema.index({ userId: 1, contentHash: 1, isDeleted: 1 });
 
-// 🔍 Full-text search index
 contentSchema.index(
   {
     title: "text",
     body: "text",
     tags: "text",
+    summary: "text", // ✅ Add summary to text index
   },
   {
     name: "ContentTextIndex",
     weights: {
-      title: 5, // title more important
+      title: 5,
+      summary: 4, // ✅ Summary is also important
       body: 3,
       tags: 2,
     },
