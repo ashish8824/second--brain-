@@ -12,7 +12,7 @@ router.use(authMiddleware);
 /**
  * GET /files/view/:filename
  */
-router.get("/view/:filename", serveFile);
+// router.get("/view/:filename", serveFile);
 
 /**
  * GET /files/download/:contentId

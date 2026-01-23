@@ -29,7 +29,8 @@ const options = {
       { name: "Content", description: "Content management" },
       { name: "Collections", description: "Collection management" },
       { name: "AI - Q&A", description: "Chat with your knowledge base" },
-      { name: "Sharing", description: "Share content and collections" }, // ✅ NEW
+      { name: "Sharing", description: "Share content and collections" },
+      { name: "Files", description: "File viewing, downloading, and preview" },
     ],
   },
   apis: [
@@ -37,8 +38,9 @@ const options = {
     "./src/modules/content/*.swagger.js",
     "./src/modules/collection/*.swagger.js",
     "./src/modules/ai/*.swagger.js",
-    "./src/modules/share/*.swagger.js", // ✅ NEW
-    "./src/modules/content/fileUpload.swagger.js", // ✅ NEW
+    "./src/modules/share/*.swagger.js",
+    "./src/modules/content/fileUpload.swagger.js",
+    "./src/modules/content/file.swagger.js",
   ],
 };
 
