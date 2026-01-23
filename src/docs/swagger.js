@@ -11,8 +11,12 @@ const options = {
     },
     servers: [
       {
-        url: process.env.API_URL || "http://localhost:5000",
-        description: "Development server",
+        url: "http://16.171.12.184:5000",
+        description: "AWS EC2 Production",
+      },
+      {
+        url: "http://localhost:5000",
+        description: "Local Development",
       },
     ],
     components: {
