@@ -10,6 +10,7 @@ import collectionRoutes from "./modules/collection/collection.routes.js";
 import embeddingRoutes from "./modules/ai/embedding.routes.js";
 import aiQARoutes from "./modules/ai/aiQA.routes.js";
 import shareRoutes from "./modules/share/share.routes.js"; // ✅ NEW
+import fileRoutes from "./modules/content/file.routes.js";
 
 import { swaggerUI, swaggerSpec } from "./docs/swagger.js";
 
@@ -47,6 +48,12 @@ app.get("/", (req, res) => {
         viewShared:
           "POST /shared/content/:token or POST /shared/collection/:token",
         myShares: "GET /share/my-shares",
+      },
+      files: {
+        // ✅ NEW
+        view: "GET /files/view/:filename",
+        download: "GET /files/download/:contentId",
+        preview: "GET /files/preview/:contentId",
       },
     },
     swagger: {
@@ -94,6 +101,7 @@ app.use("/ai", embeddingRoutes);
 app.use("/ai", aiQARoutes);
 app.use("/share", shareRoutes); // ✅ NEW - Protected routes
 app.use("/shared", shareRoutes); // ✅ NEW - Public routes
+app.use("/files", fileRoutes); // ✅ NEW  - File serving routes
 
 // 404 Handler
 app.use((req, res, next) => {
@@ -108,7 +116,8 @@ app.use((req, res, next) => {
       collections: "/collections/*",
       ai: "/ai/*",
       aiQA: "POST /ai/ask",
-      sharing: "/share/*", // ✅ NEW
+      sharing: "/share/*",
+      files: "/files/*",  
     },
   });
 });

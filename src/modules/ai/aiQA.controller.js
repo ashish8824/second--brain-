@@ -9,7 +9,6 @@ export const askQuestion = async (req, res, next) => {
     const { question, tags, limit } = req.body;
     const userId = req.user.userId;
 
-    // Validation
     if (!question || question.trim().length === 0) {
       return res.status(400).json({
         success: false,
@@ -26,15 +25,31 @@ export const askQuestion = async (req, res, next) => {
 
     console.log(`[Controller] User ${userId} asked: "${question}"`);
 
-    // Get answer from AI Q&A service
     const result = await aiQAService.answerQuestion(userId, question, {
       tags,
       limit: limit || 5,
     });
 
+    // ✅ NEW: Add file URLs to sources
+    const sourcesWithFiles = result.sources.map((source) => {
+      const hasFile = source.type === "document" || source.type === "image";
+
+      return {
+        ...source,
+        hasFile,
+        fileUrl: hasFile
+          ? `${req.protocol}://${req.get("host")}/files/preview/${source.id}`
+          : null,
+      };
+    });
+
     res.status(200).json({
       success: true,
-      ...result,
+      answer: result.answer,
+      sources: sourcesWithFiles,
+      confidence: result.confidence,
+      contentCount: result.contentCount,
+      timestamp: result.timestamp,
     });
   } catch (error) {
     console.error("[Controller] AI Q&A error:", error);

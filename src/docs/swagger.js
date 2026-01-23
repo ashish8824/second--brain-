@@ -28,10 +28,6 @@ const options = {
       { name: "Auth", description: "Authentication endpoints" },
       { name: "Content", description: "Content management" },
       { name: "Collections", description: "Collection management" },
-      {
-        name: "AI - Embeddings",
-        description: "Semantic search with embeddings",
-      },
       { name: "AI - Q&A", description: "Chat with your knowledge base" },
       { name: "Sharing", description: "Share content and collections" }, // ✅ NEW
     ],

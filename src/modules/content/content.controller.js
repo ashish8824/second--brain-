@@ -11,6 +11,23 @@ import {
 } from "./content.service.js";
 
 /**
+ * Helper: Add file URLs to content
+ */
+const addFileUrls = (content, req) => {
+  if (!content) return null;
+
+  const contentObj = content.toObject ? content.toObject() : content;
+
+  if (contentObj.type === "document" || contentObj.type === "image") {
+    const baseUrl = `${req.protocol}://${req.get("host")}`;
+    contentObj.fileUrl = `${baseUrl}/files/preview/${contentObj._id}`;
+    contentObj.downloadUrl = `${baseUrl}/files/download/${contentObj._id}`;
+  }
+
+  return contentObj;
+};
+
+/**
  * Create content
  */
 export const create = async (req, res, next) => {
@@ -41,9 +58,15 @@ export const list = async (req, res, next) => {
       order,
     });
 
+    // ✅ Add file URLs to each content
+    const dataWithUrls = result.data.map((content) =>
+      addFileUrls(content, req),
+    );
+
     res.status(200).json({
       success: true,
-      ...result,
+      data: dataWithUrls,
+      pagination: result.pagination,
     });
   } catch (error) {
     next(error);
@@ -57,15 +80,17 @@ export const getOne = async (req, res, next) => {
   try {
     const content = await getContentById(req.params.id, req.user.userId);
 
+    // ✅ Add file URLs
+    const contentWithUrls = addFileUrls(content, req);
+
     res.status(200).json({
       success: true,
-      data: content,
+      data: contentWithUrls,
     });
   } catch (error) {
     next(error);
   }
 };
-
 /**
  * Update content
  */

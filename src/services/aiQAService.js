@@ -173,6 +173,17 @@ class AIQAService {
         context += `URL: ${content.sourceUrl}\n`;
       }
 
+      // ✅ NEW: Add file information
+      if (content.type === "document" || content.type === "image") {
+        context += `File: ${content.metadata?.fileName || "Unknown"}\n`;
+        if (content.metadata?.numPages) {
+          context += `Pages: ${content.metadata.numPages}\n`;
+        }
+        if (content.type === "image" && content.metadata?.hasExtractedText) {
+          context += `Text extracted from image (OCR confidence: ${content.metadata.ocrConfidence?.toFixed(0)}%)\n`;
+        }
+      }
+
       if (content.summary) {
         context += `\nSummary:\n${content.summary}\n`;
       }
