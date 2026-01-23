@@ -32,7 +32,8 @@ const options = {
         name: "AI - Embeddings",
         description: "Semantic search with embeddings",
       },
-      { name: "AI - Q&A", description: "Chat with your knowledge base" }, // ✅ NEW
+      { name: "AI - Q&A", description: "Chat with your knowledge base" },
+      { name: "Sharing", description: "Share content and collections" }, // ✅ NEW
     ],
   },
   apis: [
@@ -40,8 +41,12 @@ const options = {
     "./src/modules/content/*.swagger.js",
     "./src/modules/collection/*.swagger.js",
     "./src/modules/ai/*.swagger.js",
+    "./src/modules/share/*.swagger.js", // ✅ NEW
+    "./src/modules/content/fileUpload.swagger.js", // ✅ NEW
   ],
 };
+
+console.log("Swagger files:", options.apis);
 
 const swaggerSpec = swaggerJsdoc(options);
 

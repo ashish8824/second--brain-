@@ -8,27 +8,14 @@ import errorHandler from "./middlewares/error.middleware.js";
 import contentRoutes from "./modules/content/content.routes.js";
 import collectionRoutes from "./modules/collection/collection.routes.js";
 import embeddingRoutes from "./modules/ai/embedding.routes.js";
-import aiQARoutes from "./modules/ai/aiQA.routes.js"; // ✅ NEW
+import aiQARoutes from "./modules/ai/aiQA.routes.js";
+import shareRoutes from "./modules/share/share.routes.js"; // ✅ NEW
 
 import { swaggerUI, swaggerSpec } from "./docs/swagger.js";
 
 const app = express();
 
-const allowedOrigins = process.env.FRONTEND_URL.split(",");
-
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("CORS not allowed"));
-      }
-    },
-    credentials: true,
-  }),
-);
-
+app.use(cors());
 app.use(express.json());
 app.use(passport.initialize());
 
@@ -52,7 +39,14 @@ app.get("/", (req, res) => {
       collections: "/collections/*",
       ai: {
         embeddings: "/ai/*",
-        qa: "POST /ai/ask (NEW!)", // ✅ NEW
+        qa: "POST /ai/ask",
+      },
+      sharing: {
+        // ✅ NEW
+        createShare: "POST /share/content/:id or POST /share/collection/:id",
+        viewShared:
+          "POST /shared/content/:token or POST /shared/collection/:token",
+        myShares: "GET /share/my-shares",
       },
     },
     swagger: {
@@ -97,7 +91,9 @@ app.use("/auth", authRoutes);
 app.use("/content", contentRoutes);
 app.use("/collections", collectionRoutes);
 app.use("/ai", embeddingRoutes);
-app.use("/ai", aiQARoutes); // ✅ NEW - AI Q&A routes
+app.use("/ai", aiQARoutes);
+app.use("/share", shareRoutes); // ✅ NEW - Protected routes
+app.use("/shared", shareRoutes); // ✅ NEW - Public routes
 
 // 404 Handler
 app.use((req, res, next) => {
@@ -111,7 +107,8 @@ app.use((req, res, next) => {
       content: "/content/*",
       collections: "/collections/*",
       ai: "/ai/*",
-      aiQA: "POST /ai/ask", // ✅ NEW
+      aiQA: "POST /ai/ask",
+      sharing: "/share/*", // ✅ NEW
     },
   });
 });

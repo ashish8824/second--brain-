@@ -22,6 +22,11 @@ import {
 import validateObjectId from "../../middlewares/validateObjectId.js";
 import validateOwnership from "../../middlewares/ownership.middleware.js";
 import Content from "../../models/content.model.js";
+import {
+  handleUploadError,
+  uploadSingle,
+} from "../../middlewares/upload.middleware.js";
+import { uploadImage, uploadPDF } from "./fileUpload.controller.js";
 
 const router = express.Router();
 
@@ -56,5 +61,9 @@ router.get("/:id/content", validateObjectId("id"), getCollectionContent);
 
 // ✅ NEW ROUTE: Create from URL (must be before /:id routes)
 router.post("/from-url", validate(createFromURLSchema), createFromURL);
+
+// File upload routes
+router.post("/upload/pdf", uploadSingle, handleUploadError, uploadPDF);
+router.post("/upload/image", uploadSingle, handleUploadError, uploadImage);
 
 export default router;
