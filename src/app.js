@@ -88,7 +88,7 @@ app.use(
   }),
 );
 
-app.get("/api/docs.json", (req, res) => {
+app.get("/docs.json", (req, res) => {
   res.setHeader("Content-Type", "application/json");
   res.send(swaggerSpec);
 });
@@ -117,7 +117,7 @@ app.use((req, res, next) => {
       ai: "/ai/*",
       aiQA: "POST /ai/ask",
       sharing: "/share/*",
-      files: "/files/*",  
+      files: "/files/*",
     },
   });
 });
