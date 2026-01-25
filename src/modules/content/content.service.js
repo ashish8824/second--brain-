@@ -5,6 +5,7 @@ import crypto from "crypto";
 import urlScraper from "../../utils/urlScraper.js";
 import aiSummaryService from "../../services/aiSummaryService.js";
 import groqSummaryService from "../../services/groqSummaryService.js";
+import { deleteFromS3 } from "../../config/s3.config.js";
 
 /**
  * Generate content hash
@@ -165,18 +166,36 @@ export const updateContent = async (contentId, userId, data) => {
 };
 
 /**
- * Soft delete content
+ * Soft delete content and cleanup S3 file
  */
 export const deleteContent = async (contentId, userId) => {
-  const content = await Content.findOneAndUpdate(
-    { _id: contentId, userId },
-    { isDeleted: true },
-    { new: true },
-  );
+  const content = await Content.findOne({
+    _id: contentId,
+    userId,
+    isDeleted: false,
+  });
 
   if (!content) {
     throw new ApiError(404, "Content not found");
   }
+
+  // ✅ Delete from S3 if file exists
+  if (content.metadata?.s3Key) {
+    try {
+      await deleteFromS3(content.metadata.s3Key);
+      console.log(`🗑️ Deleted S3 file: ${content.metadata.s3Key}`);
+    } catch (s3Error) {
+      console.error("❌ Error deleting from S3:", s3Error);
+      // Continue with soft delete even if S3 delete fails
+    }
+  }
+
+  // Soft delete
+  content.isDeleted = true;
+  content.deletedAt = new Date();
+  await content.save();
+
+  console.log(`✅ Content soft deleted: ${contentId}`);
 };
 
 /**

@@ -29,7 +29,6 @@ const contentSchema = new mongoose.Schema(
       type: String,
     },
 
-    // ✅ NEW FIELDS FOR AI SUMMARY
     summary: {
       type: String,
       trim: true,
@@ -52,9 +51,31 @@ const contentSchema = new mongoose.Schema(
 
     metadata: {
       type: Object,
-      // Extended metadata
+      // File metadata
+      fileName: String,
+      fileSize: Number,
+      mimeType: String,
+
+      // ✅ S3 metadata (NEW)
+      s3Key: String,
+      s3Bucket: String,
+      s3Location: String,
+
+      // ✅ Legacy local path (for backward compatibility)
+      filePath: String,
+      originalPath: String,
+
+      // PDF specific
+      numPages: Number,
       author: String,
       publishDate: Date,
+
+      // Image specific
+      dimensions: String,
+      hasText: Boolean,
+      ocrConfidence: Number,
+
+      // General metadata
       wordCount: Number,
       readingTime: Number,
       image: String,
@@ -62,6 +83,8 @@ const contentSchema = new mongoose.Schema(
       summarizedAt: Date,
       isFallbackSummary: Boolean,
       aiModel: String,
+      uploadDate: Date,
+      processedAt: Date,
     },
 
     contentHash: {
@@ -81,12 +104,15 @@ const contentSchema = new mongoose.Schema(
       default: false,
       index: true,
     },
+
+    deletedAt: Date,
   },
   {
     timestamps: true,
   },
 );
 
+// Indexes
 contentSchema.index({ userId: 1, contentHash: 1, isDeleted: 1 });
 
 contentSchema.index(
@@ -94,13 +120,13 @@ contentSchema.index(
     title: "text",
     body: "text",
     tags: "text",
-    summary: "text", // ✅ Add summary to text index
+    summary: "text",
   },
   {
     name: "ContentTextIndex",
     weights: {
       title: 5,
-      summary: 4, // ✅ Summary is also important
+      summary: 4,
       body: 3,
       tags: 2,
     },

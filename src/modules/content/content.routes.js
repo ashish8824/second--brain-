@@ -20,25 +20,34 @@ import {
   createFromURL,
 } from "./content.controller.js";
 import validateObjectId from "../../middlewares/validateObjectId.js";
-import validateOwnership from "../../middlewares/ownership.middleware.js";
-import Content from "../../models/content.model.js";
-import {
-  handleUploadError,
-  uploadSingle,
-} from "../../middlewares/upload.middleware.js";
+import { uploadToS3 } from "../../config/s3.config.js"; // ✅ Import S3 upload
 import { uploadImage, uploadPDF } from "./fileUpload.controller.js";
 
 const router = express.Router();
 
-// all routes are protected
+// All routes are protected
 router.use(authMiddleware);
 
+// ✅ UPLOAD ROUTES (must be before /:id routes)
+router.post(
+  "/upload/pdf",
+  uploadToS3.single("file"), // ✅ Use S3 upload
+  uploadPDF,
+);
+
+router.post(
+  "/upload/image",
+  uploadToS3.single("file"), // ✅ Use S3 upload
+  uploadImage,
+);
+
+// ✅ CREATE FROM URL (must be before /:id routes)
+router.post("/from-url", validate(createFromURLSchema), createFromURL);
+
+// Standard CRUD routes
 router.post("/", validate(createContentSchema), create);
 router.get("/", list);
 router.get("/search", search);
-router.get("/:id", getOne);
-// router.put("/:id", validate(updateContentSchema), update);
-router.delete("/:id", remove);
 
 // ✅ UPDATE CONTENT
 router.put(
@@ -48,7 +57,10 @@ router.put(
   update,
 );
 
-// ✅ COLLECTION ASSIGNMENT (must be before :id)
+// ✅ DELETE CONTENT
+router.delete("/:id", validateObjectId("id"), remove);
+
+// ✅ COLLECTION ASSIGNMENT
 router.put(
   "/:contentId/collections/:collectionId",
   validateObjectId("contentId"),
@@ -59,11 +71,7 @@ router.put(
 // ✅ GET CONTENT INSIDE A COLLECTION
 router.get("/:id/content", validateObjectId("id"), getCollectionContent);
 
-// ✅ NEW ROUTE: Create from URL (must be before /:id routes)
-router.post("/from-url", validate(createFromURLSchema), createFromURL);
-
-// File upload routes
-router.post("/upload/pdf", uploadSingle, handleUploadError, uploadPDF);
-router.post("/upload/image", uploadSingle, handleUploadError, uploadImage);
+// ✅ GET SINGLE CONTENT (must be last)
+router.get("/:id", validateObjectId("id"), getOne);
 
 export default router;
